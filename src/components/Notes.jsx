@@ -15,6 +15,11 @@ function Notes() {
   )
 
   function handleChange(e) {
+    const { name, value } = e.target
+    setForm({ ...form, [name]: value })
+  }
+
+  function handleSubmit(e) {
     e.preventDefault()
     const title = form.title.trim()
     const body = form.body.trim()
@@ -47,7 +52,7 @@ function Notes() {
           />
         </div>
 
-        <form className="grid gap-3">
+        <form onSubmit={handleSubmit} className="grid gap-3">
           <p className="text-[13px] font-normal tracking-wide text-[#949494]">NEW NOTE</p>
           <input
             name="title"
