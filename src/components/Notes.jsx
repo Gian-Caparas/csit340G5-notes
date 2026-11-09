@@ -10,8 +10,13 @@ function Notes() {
   const [form, setForm] = useState({ title: '', body: '' })
 
   function handleChange(e) {
-    const { name, value } = e.target
-    setForm({ ...form, [name]: value })
+    e.preventDefault()
+    const title = form.title.trim()
+    const body = form.body.trim()
+    if (!title || !body) return
+
+    setNotes([...notes, { id: Date.now(), title, body }])
+    setForm({ title: '', body: '' })
   }
 
   return (
