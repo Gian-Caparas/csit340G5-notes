@@ -1,18 +1,47 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import NoteCard from './NoteCard.jsx'
 
+const startingNotes = [
+  {
+    id: 1,
+    title: 'Review map and filter',
+    body: 'Redo the TodoMVC steps without looking at the guide.',
+  },
+  {
+    id: 2,
+    title: 'Prepare for the quiz',
+    body: 'Practice writing one handler for many inputs.',
+  },
+]
+
 function Notes() {
-    const [notes, setNotes] = useState([
-    { id: 1, title: 'Review map and filter', body: 'Redo the TodoMVC steps without looking at the guide.' },
-    { id: 2, title: 'Prepare for the quiz', body: 'Practice writing one handler for many inputs.' },
-    ])
+  const [notes, setNotes] = useState(() => {
+    const saved = localStorage.getItem('notes')
+    return saved ? JSON.parse(saved) : startingNotes
+  })
 
   const [form, setForm] = useState({ title: '', body: '' })
   const [search, setSearch] = useState('')
+  const titleRef = useRef(null)
 
-  const visibleNotes = notes.filter((note) =>
-    note.title.toLowerCase().includes(search.toLowerCase())
-  )
+  useEffect(() => {
+    localStorage.setItem('notes', JSON.stringify(notes))
+  }, [notes])
+
+  useEffect(() => {
+    const id = setTimeout(() => {
+      localStorage.setItem('draft', JSON.stringify(form))
+      console.log('draft saved:', form.title)
+    }, 1000)
+    return () => clearTimeout(id)
+  }, [form])
+
+  const visibleNotes = useMemo(() => {
+    console.log('filtering')
+    return notes.filter((note) =>
+      note.title.toLowerCase().includes(search.toLowerCase())
+    )
+  }, [notes, search])
 
   function handleChange(e) {
     const { name, value } = e.target
@@ -27,11 +56,12 @@ function Notes() {
 
     setNotes([...notes, { id: Date.now(), title, body }])
     setForm({ title: '', body: '' })
+    titleRef.current.focus()
   }
 
-  function handleDelete(id) {
+  const handleDelete = useCallback((id) => {
     setNotes(notes.filter((note) => note.id !== id))
-    }
+    }, [notes])
 
   return (
 
@@ -55,6 +85,7 @@ function Notes() {
         <form onSubmit={handleSubmit} className="grid gap-3">
           <p className="text-[13px] font-normal tracking-wide text-[#949494]">NEW NOTE</p>
           <input
+            ref={titleRef}
             name="title"
             value={form.title}
             onChange={handleChange}
@@ -83,14 +114,12 @@ function Notes() {
         <ul className="grid grid-cols-3 items-start gap-5">
           {visibleNotes.map((note) => (
             <li key={note.id} className="relative min-h-32 bg-white px-6 py-5 shadow-[0_2px_4px_0_rgba(0,0,0,0.2),0_25px_50px_0_rgba(0,0,0,0.1)]">
-              <NoteCard title={note.title} body={note.body} />
-              <button
-                onClick={() => handleDelete(note.id)}
-                type="button"
-                className="absolute top-4 right-5 cursor-pointer text-[26px] leading-none text-[#949494] hover:text-[#c18585]"
-              >
-                ×
-              </button>
+             <NoteCard
+              id={note.id}
+              title={note.title}
+              body={note.body}
+              onDelete={handleDelete}
+            />
             </li>
           ))}
         </ul>
